@@ -12,9 +12,8 @@
         public int NumWrongPwd { get; set; }
         public long TimeWrongPwd { get; set; }
 
-        public User(int userID, string userName, string password)
+        public User(string userName, string password)
         {
-            this.UserID = userID;
             this.UserName = userName;   
             this.Password=password;
             this.IsAdmin = false;

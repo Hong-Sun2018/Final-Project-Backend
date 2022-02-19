@@ -16,7 +16,7 @@ namespace Final_Project_Backend.Models
             if (existedUser != null)
                 return false;
 
-            string sql = @"INSERT INTO User (UserName, Password, Token, TimeLogin, NumWrongPwd, TimeWrongPwd)
+            string sql = @"INSERT INTO [User] (UserName, Password, Token, TimeLogin, NumWrongPwd, TimeWrongPwd)
                 VALUES (@userName, @password, @token, @timeLogin, @numWrongPwd, @timeWrongPwd)";
 
             using (SqlConnection connection = new SqlConnection(connStr))
@@ -46,8 +46,8 @@ namespace Final_Project_Backend.Models
 
         public User? GetUserByUsername(string username)
         {
-            string sql = @"SELECT [UserID], [UserName], [Password], [IsAdmin], [Token], [TimeLogin], [NumWrongPwd], [TimeWrongPwd] FROM User WHERE Username=@username";
-
+            string sql = @"SELECT UserID, [UserName], [Password], [IsAdmin], [Token], [TimeLogin], [NumWrongPwd], [TimeWrongPwd] FROM [User] WHERE UserName=@username";
+            Console.WriteLine("2222222");
             using (SqlConnection connection = new SqlConnection(connStr))
             using (SqlCommand command = new SqlCommand(sql, connection))
             {
@@ -57,12 +57,13 @@ namespace Final_Project_Backend.Models
 
                 if (reader.Read())
                 {
+                    Console.Error.WriteLine("1111111");
                     User user = new User(
-                        reader.GetSqlInt32(0).Value,
                         reader.GetSqlString(1).Value,
                         reader.GetSqlString(2).Value
                     );
 
+                    user.UserID = reader.GetSqlInt32(0).Value;
                     user.IsAdmin = reader.GetSqlBoolean(3).Value;
                     user.Token = reader.GetSqlString(4).Value;
                     user.TimeLogin = reader.GetSqlInt64(5).Value;
@@ -90,10 +91,10 @@ namespace Final_Project_Backend.Models
                 while (reader.Read())
                 {
                     User user = new User(
-                        reader.GetSqlInt32(0).Value,
                         reader.GetSqlString(1).Value,
                         ""
                     );
+                    user.UserID = reader.GetSqlInt32(0).Value;
                     users.Add(user);
                 }
                 return users;
@@ -115,11 +116,11 @@ namespace Final_Project_Backend.Models
                 if (reader.Read())
                 {
                     User user = new User(
-                        reader.GetSqlInt32(0).Value,
                         reader.GetSqlString(1).Value,
                         ""
                     );
 
+                    user.UserID = userID;
                     return user;
                 }
                 else
