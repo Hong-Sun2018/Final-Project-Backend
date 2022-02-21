@@ -128,9 +128,9 @@ namespace Final_Project_Backend.Models
             }
         }
 
-        public void UpdateUser(User user)
+        public async void UpdateUser(User user)
         {
-            string sql = @"UPDATE User SET Token=@token TimeLogin=@timeLogin NumWrongPwd=@numWrongPwd TimeWrongPwd=@timeWrongPwd WHERE UserID=@userID";
+            string sql = @"UPDATE [User] SET Token=@token, TimeLogin=@timeLogin, NumWrongPwd=@numWrongPwd, TimeWrongPwd=@timeWrongPwd WHERE UserID=@userID";
 
             using (SqlConnection connection = new SqlConnection(connStr))
             using (SqlCommand command = new SqlCommand(sql, connection))
@@ -142,7 +142,7 @@ namespace Final_Project_Backend.Models
                 command.Parameters.Add(new SqlParameter("timeWrongPwd", user.TimeWrongPwd));
                 command.Parameters.Add(new SqlParameter("userID", user.UserID));
 
-                command.ExecuteNonQuery();
+                await command.ExecuteNonQueryAsync();
             }
         }
     }

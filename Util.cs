@@ -24,5 +24,12 @@ namespace Final_Project_Backend
         {
             return (long)(DateTime.Now.ToUniversalTime() - new DateTime(1970, 1, 1)).TotalSeconds;
         }
+
+        public static string GenerateUserToken(Models.Classes.User user)
+        {
+            Random random = new Random();
+            string seed = user.UserName + random.NextInt64();
+            return CalculateMd5(seed) + user.UserID;
+        }
     }
 }
