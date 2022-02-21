@@ -137,7 +137,7 @@ namespace Final_Project_Backend.Models
             {
                 connection.Open();
                 command.Parameters.Add(new SqlParameter("token", user.Token));
-                command.Parameters.Add(new SqlParameter("timeLogin", user.Token));
+                command.Parameters.Add(new SqlParameter("timeLogin", user.TimeLogin));
                 command.Parameters.Add(new SqlParameter("numWrongPwd", user.NumWrongPwd));
                 command.Parameters.Add(new SqlParameter("timeWrongPwd", user.TimeWrongPwd));
                 command.Parameters.Add(new SqlParameter("userID", user.UserID));

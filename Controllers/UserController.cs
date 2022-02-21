@@ -60,11 +60,12 @@ namespace Final_Project_Backend.Controllers
                     return Unauthorized();
                 else
                 {
-                    UserInfo userInfo = new UserInfo(user.UserID, user.UserName);
-                    user.Token = Util.GenerateUserToken(user);
-                    user.TimeLogin = Util.CurrentTimestamp();
-                    user.NumWrongPwd = 0;
-                    userDB.UpdateUser(user);
+                    UserInfo userInfo = new UserInfo(userFromDB.UserID, userFromDB.UserName);
+                 
+                    userFromDB.Token = Util.GenerateUserToken(userFromDB);
+                    userFromDB.TimeLogin = Util.CurrentTimestamp();
+                    userFromDB.NumWrongPwd = 0;
+                    userDB.UpdateUser(userFromDB);
 
                     CookieOptions cookieOptions = new CookieOptions
                     {
@@ -72,7 +73,7 @@ namespace Final_Project_Backend.Controllers
                         HttpOnly = true,
                         SameSite = SameSiteMode.None,
                     };
-                    HttpContext.Response.Cookies.Append("userToken", user.Token, cookieOptions);
+                    HttpContext.Response.Cookies.Append("userToken", userFromDB.Token, cookieOptions);
                     return userInfo;
                 }
             }
