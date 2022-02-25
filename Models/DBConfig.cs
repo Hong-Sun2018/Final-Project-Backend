@@ -1,10 +1,10 @@
 ﻿namespace Final_Project_Backend.Models
 {
-    public class DbConnection
+    public static class DBConfig
     {
-        private const string conString = @"
+        public const string ConnString = @"
             Data Source=h0n9.com;
-            Initial Catalog=FinalProject;
+            Initial Catalog=FinalProject_EF;
             User ID=SA;Password=Winzippp1!;
             Connect Timeout=30;
             Encrypt=False;
@@ -13,9 +13,7 @@
             MultiSubnetFailover=False
         ";
 
-        public string GetConnStr()
-        {
-            return conString;
-        }
+        public const int TokenLife = 24 * 3600;
+        public const int LoginLift = 3 * 24 * 3600;
     }
 }

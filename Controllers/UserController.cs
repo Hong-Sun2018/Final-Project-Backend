@@ -12,6 +12,15 @@ namespace Final_Project_Backend.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
+        private readonly CookieOptions _cookieOptions = new CookieOptions()
+        {
+            Secure = true,
+            HttpOnly = true,
+            SameSite = SameSiteMode.None
+        };
+
+        private AppDbContext _database = new AppDbContext();
+        
         [Route("signup")]
         [HttpPost]
         public async Task<ActionResult<UserInfo>> SignUp([FromBody] User user)
@@ -20,23 +29,20 @@ namespace Final_Project_Backend.Controllers
             {
                 return BadRequest();
             }
-            UserDB userDB = new();
+     
             try
             {
-              
-                if (await userDB.CreateUser(user))
+                if ( _database.Users.Where(userFromDb => userFromDb.UserName == user.UserName).ToArray().Length != 0)
                 {
-                    CookieOptions cookieOptions = new CookieOptions
-                    {
-                        Secure = true,
-                        HttpOnly = true,
-                        SameSite = SameSiteMode.None
-                    };
-                    HttpContext.Response.Cookies.Append("userToken", user.Token, cookieOptions);
-                    return new UserInfo(user.UserID, user.UserName);
+                    return Conflict();
                 }
                 else
-                    return Conflict();
+                {   
+                    user.Password = Util.CalculateMd5(user.Password);
+                    await _database.Users.AddAsync(user);
+                    await _database.SaveChangesAsync();
+                    return StatusCode(201);
+                }
             } catch (Exception)
             {
                 return StatusCode(500);
@@ -50,30 +56,24 @@ namespace Final_Project_Backend.Controllers
             if (user.UserName.Length == 0 || user.Password.Length == 0) 
                 return Unauthorized();
 
-            UserDB userDB = new();
-
             try
             {
-                User? userFromDB = userDB.GetUserByUsername(user.UserName);
+                user.Password = Util.CalculateMd5(user.Password);
+                User? userFromDb = _database.Users.Where(u => u.UserName == user.UserName).First();
 
-                if (userFromDB == null || userFromDB.Password != user.Password)
+                if (userFromDb == null || userFromDb.Password != user.Password)
                     return Unauthorized();
                 else
                 {
-                    UserInfo userInfo = new UserInfo(userFromDB.UserID, userFromDB.UserName);
+                    UserInfo userInfo = new UserInfo(userFromDb.UserID, userFromDb.UserName);
                  
-                    userFromDB.Token = Util.GenerateUserToken(userFromDB);
-                    userFromDB.TimeLogin = Util.CurrentTimestamp();
-                    userFromDB.NumWrongPwd = 0;
-                    userDB.UpdateUser(userFromDB);
-
-                    CookieOptions cookieOptions = new CookieOptions
-                    {
-                        Secure = true,
-                        HttpOnly = true,
-                        SameSite = SameSiteMode.None,
-                    };
-                    HttpContext.Response.Cookies.Append("userToken", userFromDB.Token, cookieOptions);
+                    userFromDb.Token = Util.GenerateUserToken(userFromDb);
+                    userFromDb.TimeLogin = Util.CurrentTimestamp();
+                    userFromDb.NumWrongPwd = 0;
+                    _database.Users.Update(userFromDb);
+                    await _database.SaveChangesAsync();
+                   
+                    HttpContext.Response.Cookies.Append("userToken", userFromDb.Token, _cookieOptions);
                     return userInfo;
                 }
             }
@@ -83,9 +83,59 @@ namespace Final_Project_Backend.Controllers
                 return StatusCode(500);
             }
         }
+
+        [Route("signin-admin")]
+        [HttpPost]
+        public async Task<ActionResult<UserInfo>> SignInAdmin([FromBody] User user)
+        {
+            if (user.UserName.Length == 0 || user.Password.Length == 0)
+            {
+                return Unauthorized();
+            }
+
+            
+            try
+            {
+                user.Password = Util.CalculateMd5(user.Password);
+                User userFromDB = _database.Users.Where(u => u.UserName == user.UserName).First();
+               
+                if (userFromDB == null ||
+                    userFromDB.Password != user.Password ||
+                    !userFromDB.IsAdmin)
+                {
+                    return Unauthorized();
+                }
+
+                userFromDB.Token = Util.GenerateUserToken(userFromDB);
+                userFromDB.TimeLogin = Util.CurrentTimestamp();
+                userFromDB.NumWrongPwd = 0;
+
+                _database.Users.Update(userFromDB);
+                await _database.SaveChangesAsync();
+
+                UserInfo userInfo = new UserInfo(
+                    userFromDB.UserID,
+                    userFromDB.UserName
+                );
+                userInfo.isAdmin = userFromDB.IsAdmin;
+
+                CookieOptions cookieOptions = new CookieOptions()
+                {
+                    Secure = true,
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.None,
+                    Path = "/",
+                    IsEssential = true,
+                    Domain = HttpContext.Request.Host.Host
+                };
+                HttpContext.Response.Cookies.Append("userToken", userFromDB.Token, cookieOptions);
+
+                return userInfo;
+            }
+            catch (Exception)
+            {
+                return StatusCode(500);
+            }
+        }
     }
-
-    
-
-
 }
