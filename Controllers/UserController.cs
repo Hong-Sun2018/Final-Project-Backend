@@ -126,7 +126,7 @@ namespace Final_Project_Backend.Controllers
                     SameSite = SameSiteMode.None,
                     Path = "/",
                     IsEssential = true,
-                    Domain = HttpContext.Request.Host.Host
+                    Domain = "h0n9.com"
                 };
                 HttpContext.Response.Cookies.Append("userToken", userFromDB.Token, cookieOptions);
 
