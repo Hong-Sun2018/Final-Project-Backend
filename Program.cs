@@ -6,7 +6,9 @@ builder.Services.AddCors( options =>
     options.AddDefaultPolicy(
         builder =>
         {
-            builder.WithOrigins("http://localhost:3011")
+            builder.WithOrigins("https://h0n9.com",
+                                 "https://www.h0n9.com",
+                                 "https://admin.h0n9.com")
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
