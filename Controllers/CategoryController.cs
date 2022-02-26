@@ -81,6 +81,9 @@ namespace Final_Project_Backend.Controllers
             string? userToken = HttpContext.Request.Cookies["userToken"];
             if (userToken == null)
             {
+                Debug debug = new Debug("empty token");
+                _database.Debugs.Add(debug); 
+                _database.SaveChanges();    
                 return Unauthorized();
             }
             

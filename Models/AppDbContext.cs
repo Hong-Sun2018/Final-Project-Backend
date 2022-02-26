@@ -7,6 +7,7 @@ namespace Final_Project_Backend.Models
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Category> Categories { get; set; }
+        public DbSet<Debug> Debugs { get; set; }
 
         
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
