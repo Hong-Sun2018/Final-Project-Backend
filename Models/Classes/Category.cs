@@ -8,6 +8,7 @@ namespace Final_Project_Backend.Models.Classes
     {
         [Key]
         public int CategoryID { get; set; }
+        [MaxLength(30)]
         public string CategoryName { get; set; }
         public int ParentID { get; set; }
 

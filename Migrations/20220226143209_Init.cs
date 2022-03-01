@@ -4,7 +4,7 @@
 
 namespace Final_Project_Backend.Migrations
 {
-    public partial class init : Migration
+    public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -14,12 +14,26 @@ namespace Final_Project_Backend.Migrations
                 {
                     CategoryID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    CategoryName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CategoryName = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
                     ParentID = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.CategoryID);
+                    table.UniqueConstraint("AK_CategoryName", x => x.CategoryName);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Debugs",
+                columns: table => new
+                {
+                    DebugID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Msg = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Debugs", x => x.DebugID);
                 });
 
             migrationBuilder.CreateTable(
@@ -28,9 +42,9 @@ namespace Final_Project_Backend.Migrations
                 {
                     UserID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Token = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    Password = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: false),
+                    Token = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                     TimeLogin = table.Column<long>(type: "bigint", nullable: false),
                     IsAdmin = table.Column<bool>(type: "bit", nullable: false),
                     NumWrongPwd = table.Column<int>(type: "int", nullable: false),
@@ -39,6 +53,7 @@ namespace Final_Project_Backend.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.UserID);
+                    table.UniqueConstraint("AK_UserName", x => x.UserName);
                 });
         }
 
@@ -46,6 +61,9 @@ namespace Final_Project_Backend.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Categories");
+
+            migrationBuilder.DropTable(
+                name: "Debugs");
 
             migrationBuilder.DropTable(
                 name: "Users");

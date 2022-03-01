@@ -14,104 +14,133 @@ namespace Final_Project_Backend.Controllers
         {
             Secure = true,
             HttpOnly = true,
-            SameSite = SameSiteMode.None
+            SameSite = SameSiteMode.None,
+            IsEssential = true
         };
 
-        private AppDbContext _database = new AppDbContext();
-
-        private string? CheckAdminToken(string token)
+        private User? CheckUserToken(string token)
         {
+            AppDbContext database = new AppDbContext();
             // get user by token
-            User? user = _database.Users.Where(user => user.Token == token).First();
+            User[] users = database.Users.Where(user => user.Token == token).ToArray();
+            long currentTime = Util.CurrentTimestamp();
 
             // if cannot find user
-            if (user == null)
+            if (users.Length != 1)
             {
                 return null;
             }
-            else if (!user.IsAdmin)
+            else if (currentTime - users[0].TimeLogin > 3 * 24 * 3600)
             {
                 return null;
             }
-            else if (Util.CurrentTimestamp() - user.TimeLogin > 3 * 24 * 3600)
+            else if (currentTime - users[0].TimeToken > 1 * 24 * 3600)
             {
-                return null;
+                users[0].TimeToken = currentTime;
+                users[0].TimeLogin = currentTime;
+                users[0].Token = Util.GenerateUserToken(users[0]);
+                return users[0];
             }
             else
             {
-                user.Token = Util.GenerateUserToken(user);
-                user.TimeLogin = Util.CurrentTimestamp();
-                _database.Users.Update(user);
-                _database.SaveChangesAsync();
-                return user.Token;
+                users[0].TimeLogin = currentTime;
+                return users[0];
             }
         }
 
-        private string? CheckUserToken(string token)
+        private User? CheckAdminToken(string token)
         {
+            AppDbContext database = new AppDbContext();
             // get user by token
-            User? user = _database.Users.Where(user => user.Token == token).First();
+            User[] users = database.Users.Where(user => user.Token == token).ToArray();
+            long currentTime = Util.CurrentTimestamp();
 
-            if (user == null)
+            // if cannot find user
+            if (users.Length != 1)
             {
                 return null;
             }
-            else if (Util.CurrentTimestamp() - user.TimeLogin > 3 * 24 * 3600)
+            else if (!users[0].IsAdmin)
             {
                 return null;
+            }
+            else if (currentTime - users[0].TimeLogin > 3 * 24 * 3600)
+            {
+                return null;
+            }
+            else if (currentTime - users[0].TimeToken > 1 * 24 * 3600)
+            {
+                users[0].TimeToken = currentTime;
+                users[0].TimeLogin = currentTime;
+                users[0].Token = Util.GenerateUserToken(users[0]);
+                return users[0];
             }
             else
             {
-                user.Token = Util.GenerateUserToken(user);
-                user.TimeLogin = Util.CurrentTimestamp();
-                _database.Users.Update(user);
-                _database.SaveChangesAsync();
-                return user.Token;
+                users[0].TimeLogin = currentTime;
+                return users[0];
             }
         }
 
-       
         [HttpPost]
         [Route("create-category")]
         public async Task<ActionResult> CreateCategory([FromBody] Category category)
         {
-            // Check is admin
-
             // if no token return unauthorized
             string? userToken = HttpContext.Request.Cookies["userToken"];
             if (userToken == null)
             {
-                Debug debug = new Debug("empty token");
-                _database.Debugs.Add(debug); 
-                _database.SaveChanges();    
+
                 return Unauthorized();
             }
-            
+
             try
             {
-                string? newToken = CheckAdminToken(userToken);
-                if (newToken != null)
+                User? user = CheckAdminToken(userToken);
+
+                if (user != null)
                 {
-                    HttpContext.Response.Cookies.Delete("userToken", _cookieOptions);
-                    HttpContext.Response.Cookies.Append("userToken", newToken, _cookieOptions);
-                    if (_database.Categories.Where(cate => cate.CategoryName == category.CategoryName).ToArray().Length != 0)
+                    AppDbContext database = new AppDbContext();
+                    category.CategoryName = category.CategoryName.Trim();
+                    database.Debugs.Add(new Debug(category.CategoryName));
+                    database.Debugs.Add(new Debug(category.CategoryID.ToString()));
+                    database.SaveChanges();
+                    if (category.CategoryName.Equals("") || category.ParentID == 0)
+                    {
+                        return BadRequest();
+                    }
+                    
+                    database.Users.Update(user);
+                    HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
+                    Category[] categoriesFromDB = database.Categories.Where(c => c.CategoryName.Trim().Equals(category.CategoryName)).ToArray();
+                    if (categoriesFromDB.Length != 0)
                     {
                         return Conflict();
                     }
-                    else
-                    {
-                        await _database.Categories.AddAsync(category);
-                        await _database.SaveChangesAsync();
-                        return StatusCode(201);
-                    }
-                } else
+                    
+                    await database.Categories.AddAsync(category);
+                    await database.SaveChangesAsync();
+                    return StatusCode(201);                    
+                }
+                else
                 {
                     return Unauthorized();
                 }
-            }catch (Exception)
+            } catch (Exception)
             {
                 return StatusCode(500);
             }
+        }
+
+        [HttpGet("{parentID}")]
+        // [Route("get-cate-list")]
+        public ActionResult<List<Category>> GetCategoryList(int parentID)
+        { 
+  
+                AppDbContext database = new AppDbContext();
+                List<Category> categoryList = database.Categories.Where(c => c.ParentID == parentID).ToList();
+                return categoryList;
+
         }
     }
 }

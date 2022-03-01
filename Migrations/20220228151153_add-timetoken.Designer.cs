@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Final_Project_Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20220223165732_init")]
-    partial class init
+    [Migration("20220228151153_add-timetoken")]
+    partial class addtimetoken
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -33,14 +33,36 @@ namespace Final_Project_Backend.Migrations
 
                     b.Property<string>("CategoryName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<int>("ParentID")
                         .HasColumnType("int");
 
                     b.HasKey("CategoryID");
 
+                    b.HasAlternateKey("CategoryName")
+                        .HasName("AK_CategoryName");
+
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("Final_Project_Backend.Models.Classes.Debug", b =>
+                {
+                    b.Property<int>("DebugID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DebugID"), 1L, 1);
+
+                    b.Property<string>("Msg")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("DebugID");
+
+                    b.ToTable("Debugs");
                 });
 
             modelBuilder.Entity("Final_Project_Backend.Models.Classes.User", b =>
@@ -59,9 +81,13 @@ namespace Final_Project_Backend.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
 
                     b.Property<long>("TimeLogin")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TimeToken")
                         .HasColumnType("bigint");
 
                     b.Property<long>("TimeWrongPwd")
@@ -69,13 +95,18 @@ namespace Final_Project_Backend.Migrations
 
                     b.Property<string>("Token")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("UserName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.HasKey("UserID");
+
+                    b.HasAlternateKey("UserName")
+                        .HasName("AK_UserName");
 
                     b.ToTable("Users");
                 });

@@ -8,6 +8,7 @@ namespace Final_Project_Backend.Models.Classes
     {
         [Key]
         public int DebugID { get; set; }
+        [MaxLength(50)]
         public string Msg { get; set; }
 
         public Debug(string msg)
