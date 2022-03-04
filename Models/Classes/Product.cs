@@ -11,6 +11,10 @@ namespace Final_Project_Backend.Models.Classes
         [Required]
         [MaxLength(50)]
         public string? ProductName { get; set; } 
+        [Required]
+        public double? ProductPrice { get; set; }
+        [Required]
+        public int ProductStock { get; set; }
         public string? ProductDesc { get; set; }
         [Required] 
         public int CategoryID { get; set; } 

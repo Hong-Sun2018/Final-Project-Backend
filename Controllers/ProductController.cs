@@ -51,7 +51,7 @@ namespace Final_Project_Backend.Controllers
             }
         }
 
-        [HttpPost] 
+        [HttpPost]
         public async Task<ActionResult<Product>> CreateProduct([FromForm] Product product)
         {
             string? token = HttpContext.Request.Cookies["userToken"];
@@ -67,45 +67,45 @@ namespace Final_Project_Backend.Controllers
                 if (user == null)
                 {
                     HttpContext.Response.Cookies.Append("userToken", "", _cookieOptions);
-                return Unauthorized();
-            }
-            
-            if (product.FormFile1 != null)
-            {
-                byte[]? bytes = null;
-                product.FileType1 = product.FormFile1.ContentType;
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    product.FormFile1.CopyTo(ms);
-                    bytes = ms.ToArray();
+                    return Unauthorized();
                 }
-                product.File1 = bytes;
-            }
 
-            if (product.FormFile2 != null)
-            {
-                byte[]? bytes = null;
-                product.FileType2 = product.FormFile2.ContentType;
-                using (MemoryStream ms = new MemoryStream())
+                if (product.FormFile1 != null)
                 {
-                    product.FormFile2.CopyTo(ms);
-                    bytes = ms.ToArray();
+                    byte[]? bytes = null;
+                    product.FileType1 = product.FormFile1.ContentType;
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        product.FormFile1.CopyTo(ms);
+                        bytes = ms.ToArray();
+                    }
+                    product.File1 = bytes;
                 }
-                product.File2 = bytes;
-            }
 
-            if (product.FormFile3 != null)
-            {
-                byte[]? bytes = null;
-                product.FileType3 = product.FormFile3.ContentType;
-                using (MemoryStream ms = new MemoryStream())
+                if (product.FormFile2 != null)
                 {
-                    product.FormFile3.CopyTo(ms);
-                    bytes = ms.ToArray();
+                    byte[]? bytes = null;
+                    product.FileType2 = product.FormFile2.ContentType;
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        product.FormFile2.CopyTo(ms);
+                        bytes = ms.ToArray();
+                    }
+                    product.File2 = bytes;
                 }
-                product.File3 = bytes;
-            }
-          
+
+                if (product.FormFile3 != null)
+                {
+                    byte[]? bytes = null;
+                    product.FileType3 = product.FormFile3.ContentType;
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        product.FormFile3.CopyTo(ms);
+                        bytes = ms.ToArray();
+                    }
+                    product.File3 = bytes;
+                }
+
                 database.Users.Update(user);
                 await database.Products.AddAsync(product);
                 await database.SaveChangesAsync();
@@ -113,6 +113,55 @@ namespace Final_Project_Backend.Controllers
             } catch (Exception)
             {
                 return StatusCode(500);
+            }
+        }
+
+        [HttpGet("{CategoryID}/{KeyWords}")]
+        public ActionResult<List<Product>> GetProducts(int CategoryID, string KeyWords)
+        {
+            string[] keyWordList = KeyWords.Split('_');
+            List<int> categories = new List<int>();
+            AppDbContext database = new AppDbContext();
+            this.findChildrenCategory(CategoryID, categories, database);
+            List<Product> products = new List<Product>();
+            if (KeyWords.Trim().Equals("UndefinedKeyWord"))
+            {
+                products = database.Products.ToList();
+            }
+            else
+            {
+                foreach (string keyWord in keyWordList)
+                {
+                    List<Product> temp = database.Products.Where(p => p.ProductName.Contains(keyWord)).ToList();
+                    products = products.Union(temp).ToList();
+                }
+            }
+
+            if (CategoryID == 0)
+            {
+                return Ok(products);
+            }
+            else
+            {
+                List<Product> productsWithCategory = new List<Product>();
+                foreach (int categoryID in categories)
+                {
+                    productsWithCategory = productsWithCategory.Union(products.Where(p => p.CategoryID == categoryID)).ToList();
+                }
+                return Ok(productsWithCategory);
+            }
+        }
+
+        private void findChildrenCategory(int categoryID, List<int> categories, AppDbContext database)
+        {
+            categories.Add(categoryID);
+            Category[] children = database.Categories.Where(c => c.ParentID == categoryID).ToArray();
+            if (children.Length > 0)
+            {
+                foreach (Category child in children)
+                {
+                    findChildrenCategory(child.CategoryID, categories, database);
+                }
             }
         }
     }
