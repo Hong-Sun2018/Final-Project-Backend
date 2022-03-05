@@ -3,7 +3,7 @@
     public static class DBConfig
     {
         public const string ConnString = @"
-            Data Source=localhost;
+            Data Source=h0n9.com;
             Initial Catalog=FinalProject_EF;
             User ID=SA;Password=Winzippp1!;
             Connect Timeout=30;
