@@ -142,5 +142,25 @@ namespace Final_Project_Backend.Controllers
                 return categoryList;
 
         }
+
+        [HttpGet]
+        [Route("get-cate-path")]
+        public ActionResult<List<Category>> GetCategoryPath(int categoryID)
+        {
+            List<Category> catePath = new List<Category>();
+            AppDbContext database = new AppDbContext();
+            this.FindParent(categoryID, database, catePath);
+            return catePath;
+        }
+
+        private void FindParent(int categoryID, AppDbContext database, List<Category> catePath)
+        {
+            Category currentCate = database.Categories.Where(c => c.CategoryID == categoryID).First();
+            if (currentCate.ParentID != -1)
+            {
+                this.FindParent(currentCate.ParentID, database, catePath);
+            }
+            catePath.Add(currentCate);
+        }
     }
 }

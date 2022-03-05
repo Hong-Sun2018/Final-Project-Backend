@@ -164,5 +164,13 @@ namespace Final_Project_Backend.Controllers
                 }
             }
         }
+
+        [HttpGet("{productID}")]
+        public ActionResult<Product> GetProductById(int productID) 
+        {
+            AppDbContext database = new AppDbContext();
+            return database.Products.Where(p => p.ProductID == productID).First();
+        }
+
     }
 }
