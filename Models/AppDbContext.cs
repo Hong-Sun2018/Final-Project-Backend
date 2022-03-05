@@ -8,6 +8,7 @@ namespace Final_Project_Backend.Models
         public DbSet<User> Users { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Debug> Debugs { get; set; }
+        public DbSet<Product> Products { get; set; }
 
         
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -24,8 +25,6 @@ namespace Final_Project_Backend.Models
             modelBuilder.Entity<Category>()
                 .HasAlternateKey(cate => cate.CategoryName)
                 .HasName("AK_CategoryName");
-
-
         }
 
     }

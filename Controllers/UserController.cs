@@ -103,12 +103,14 @@ namespace Final_Project_Backend.Controllers
                     UserInfo userInfo = new UserInfo(user.UserID, user.UserName);
                     userInfo.isAdmin = user.IsAdmin;
                     database.Update(user);
+                    HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
                     await database.SaveChangesAsync();
                     return userInfo;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.StackTrace);
                 return StatusCode(500);
             }
         }
@@ -117,6 +119,7 @@ namespace Final_Project_Backend.Controllers
         [HttpPost]
         public async Task<ActionResult<UserInfo>> SignIn([FromBody] User user)
         {
+
             if (user.UserName.Length == 0 || user.Password.Length == 0) 
                 return Unauthorized();
 
@@ -248,7 +251,7 @@ namespace Final_Project_Backend.Controllers
             {
                 return null;
             }
-            else if (currentTime - users[0].TimeToken > 1 * 24 * 3600)
+            else if (currentTime - users[0].TimeToken > 1* 24 * 3600)
             {
                 users[0].TimeToken = currentTime;
                 users[0].TimeLogin = currentTime;
