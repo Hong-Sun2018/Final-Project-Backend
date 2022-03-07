@@ -226,5 +226,32 @@ namespace Final_Project_Backend.Controllers
             await database.SaveChangesAsync();
             return StatusCode(204);
         }
+
+        [HttpDelete("{productID}")]
+        public async Task<ActionResult> DeleteProduct(int productID)
+        {
+            string? token = HttpContext.Request.Cookies["userToken"];
+            AppDbContext database = new AppDbContext();
+            User? user = this.CheckAdminToken(token);
+
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            database.Users.Update(user);
+
+            Product? prod = database.Products.Find(productID);
+            if (prod == null)
+            {
+                await database.SaveChangesAsync();
+                return NotFound();
+            }
+            else
+            {
+                database.Products.Remove(prod);
+                await database.SaveChangesAsync();
+                return Ok();
+            }
+        }
     }
 }
