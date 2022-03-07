@@ -2,6 +2,8 @@
 using Final_Project_Backend.Models.Classes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace Final_Project_Backend.Controllers
 {
@@ -17,13 +19,18 @@ namespace Final_Project_Backend.Controllers
             IsEssential = true
         };
 
-        private User? CheckAdminToken(string token)
+        private User? CheckAdminToken(string? token)
         {
+            
+            if (token == null || token.Length < 32)
+            {
+                return null;
+            }
+            
             AppDbContext database = new AppDbContext();
             // get user by token
             User[] users = database.Users.Where(user => user.Token == token).ToArray();
             long currentTime = Util.CurrentTimestamp();
-
             // if cannot find user
             if (users.Length != 1)
             {
@@ -51,70 +58,70 @@ namespace Final_Project_Backend.Controllers
             }
         }
 
+        private  byte[] ResizeImageAndToBytesArray(IFormFile file)
+        {
+            Image image = Image.FromStream(file.OpenReadStream());
+            double height = (double)image.Height;
+            double width = (double)image.Width;
+            double ratio = height / width;
+            using var memStream = new MemoryStream();   
+            if (width > 225)
+            {
+                int newWidth = 225;
+                int newHeight = (int)(newWidth * ratio);
+                Image resizedImage = new Bitmap(image, new Size(newWidth, newHeight));
+                resizedImage.Save(memStream, image.RawFormat);
+                return memStream.ToArray();
+            }
+            else
+            {
+                file.CopyTo(memStream);
+                return memStream.ToArray();
+            }
+        }
+
         [HttpPost]
         public async Task<ActionResult<Product>> CreateProduct([FromForm] Product product)
         {
             string? token = HttpContext.Request.Cookies["userToken"];
-            if (token == null)
-            {
-                HttpContext.Response.Cookies.Append("userToken", "", _cookieOptions);
-                return Unauthorized();
-            }
+            
             try
             {
                 AppDbContext database = new AppDbContext();
                 User? user = this.CheckAdminToken(token);
                 if (user == null)
                 {
-                    HttpContext.Response.Cookies.Append("userToken", "", _cookieOptions);
                     return Unauthorized();
                 }
 
                 if (product.FormFile1 != null)
                 {
-                    byte[]? bytes = null;
+                    product.File1 = this.ResizeImageAndToBytesArray(product.FormFile1);
                     product.FileType1 = product.FormFile1.ContentType;
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        product.FormFile1.CopyTo(ms);
-                        bytes = ms.ToArray();
-                    }
-                    product.File1 = bytes;
                 }
 
                 if (product.FormFile2 != null)
                 {
-                    byte[]? bytes = null;
+                    product.File2 = this.ResizeImageAndToBytesArray(product.FormFile2);
                     product.FileType2 = product.FormFile2.ContentType;
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        product.FormFile2.CopyTo(ms);
-                        bytes = ms.ToArray();
-                    }
-                    product.File2 = bytes;
                 }
 
                 if (product.FormFile3 != null)
                 {
-                    byte[]? bytes = null;
+                    product.File3 = this.ResizeImageAndToBytesArray(product.FormFile3);
                     product.FileType3 = product.FormFile3.ContentType;
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        product.FormFile3.CopyTo(ms);
-                        bytes = ms.ToArray();
-                    }
-                    product.File3 = bytes;
                 }
 
                 database.Users.Update(user);
                 await database.Products.AddAsync(product);
                 await database.SaveChangesAsync();
                 return StatusCode(201);
-            } catch (Exception)
+            }
+            catch (Exception)
             {
                 return StatusCode(500);
             }
-        }
+}
 
         [HttpGet("{CategoryID}/{KeyWords}")]
         public ActionResult<List<Product>> GetProducts(int CategoryID, string KeyWords)
@@ -169,8 +176,55 @@ namespace Final_Project_Backend.Controllers
         public ActionResult<Product> GetProductById(int productID) 
         {
             AppDbContext database = new AppDbContext();
-            return database.Products.Where(p => p.ProductID == productID).First();
+            List<Product> prodList = database.Products.Where(p => p.ProductID == productID).ToList();
+            if (prodList.Count == 1) 
+                return Ok(prodList.First());
+            else 
+                return NotFound();
         }
 
+        [HttpPut]
+        public async Task<ActionResult> UpdateProductById([FromForm] Product product)
+        {
+            string? token = HttpContext.Request.Cookies["userToken"];
+            User? user = this.CheckAdminToken(token);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            AppDbContext database = new AppDbContext();
+            database.Users.Update(user);
+            Product[] productsFromDB = database.Products.Where(p => p.ProductID == product.ProductID).ToArray();
+            if (productsFromDB.Length != 1)
+            {
+                return NotFound();
+            }
+
+            if (product.FormFile1 != null)
+            {
+                productsFromDB[0].FileType1 = product.FormFile1.ContentType;
+                productsFromDB[0].File1 = this.ResizeImageAndToBytesArray(product.FormFile1);
+            }
+            if (product.FormFile2 != null)
+            {
+                productsFromDB[0].FileType2 = product.FormFile2.ContentType;
+                productsFromDB[0].File2 = this.ResizeImageAndToBytesArray(product.FormFile2);
+            }
+            if (product.FormFile3 != null)
+            {
+                productsFromDB[0].FileType3 = product.FormFile3.ContentType;
+                productsFromDB[0].File3 = this.ResizeImageAndToBytesArray(product.FormFile3);
+            }
+
+            productsFromDB[0].ProductDesc = product.ProductDesc;
+            productsFromDB[0].ProductName = product.ProductName;
+            productsFromDB[0].ProductPrice = product.ProductPrice;
+            productsFromDB[0].ProductStock = product.ProductStock;
+            productsFromDB[0].CategoryID = product.CategoryID;
+            database.Products.Update(productsFromDB[0]);
+            await database.SaveChangesAsync();
+            return StatusCode(204);
+        }
     }
 }
