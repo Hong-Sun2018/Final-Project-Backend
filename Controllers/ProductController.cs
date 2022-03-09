@@ -139,8 +139,11 @@ namespace Final_Project_Backend.Controllers
             {
                 foreach (string keyWord in keyWordList)
                 {
-                    List<Product> temp = database.Products.Where(p => p.ProductName.Contains(keyWord)).ToList();
-                    products = products.Union(temp).ToList();
+                    if (keyWord.Length > 0)
+                    {
+                        List<Product> temp = database.Products.Where(p => p.ProductName.ToLower().Contains(keyWord.ToLower())).ToList();
+                        products = products.Union(temp).ToList();
+                    }
                 }
             }
 

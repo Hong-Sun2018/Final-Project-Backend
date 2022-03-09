@@ -47,15 +47,19 @@ namespace Final_Project_Backend.Controllers
             }
         }
 
+        [Route("signout")]
+        [HttpGet]
+        public ActionResult TokenSignOut()
+        {
+            HttpContext.Response.Cookies.Delete("userToken");
+            return Ok();
+        }
+
         [Route("token-login")]
         [HttpGet]
         public async Task<ActionResult<UserInfo>> TokenLogin()
         {
             string? userToken = HttpContext.Request.Cookies["userToken"];
-            if (userToken == null)
-            {
-                return Unauthorized();
-            }
             
             try
             {
@@ -84,10 +88,6 @@ namespace Final_Project_Backend.Controllers
         public async Task<ActionResult<UserInfo>> TokenLoginAdmin()
         {
             string? userToken = HttpContext.Request.Cookies["userToken"];
-            if (userToken == null)
-            {
-                return Unauthorized();
-            }
 
             try
             {
@@ -201,8 +201,13 @@ namespace Final_Project_Backend.Controllers
             }
         }
 
-        private User? CheckUserToken(string token)
-        {
+        private User? CheckUserToken(string? token)
+        {   
+            if (token == null || token.Length < 32)
+            {
+                return null;
+            }
+
             AppDbContext database = new AppDbContext();
             // get user by token
             User[] users = database.Users.Where(user => user.Token == token).ToArray();
@@ -231,8 +236,13 @@ namespace Final_Project_Backend.Controllers
             }
         }
 
-        private User? CheckAdminToken(string token)
+        private User? CheckAdminToken(string? token)
         {
+            if (token == null || token.Length < 32)
+            {
+                return null;
+            } 
+
             AppDbContext database = new AppDbContext();
             // get user by token
             User[] users = database.Users.Where(user => user.Token == token).ToArray();
