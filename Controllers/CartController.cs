@@ -114,7 +114,7 @@ namespace Final_Project_Backend.Controllers
                     this.database.Products,
                     cartProd => cartProd.ProductID,
                     prod => prod.ProductID,
-                    (cartProd, prod) => new { cartProd.Id, cartProd.UserID, cartProd.ProductID, cartProd.ProductAmount, prod.ProductName, prod.ProductStock, prod.ProductPrice, prod.FileType1, prod.File1 }
+                    (cartProd, prod) => new { cartProd.Id, cartProd.UserID, cartProd.ProductID, cartProd.ProductAmount, prod.ProductName, prod.ProductStock, prod.ProductPrice, prod.File1 }
                 ).ToList();
             this.database.Users.Update(user);
             await this.database.SaveChangesAsync();

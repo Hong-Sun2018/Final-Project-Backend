@@ -203,7 +203,7 @@ namespace Final_Project_Backend.Controllers
                 .Join(this.database.Products,
                     orderProd => orderProd.ProductId,
                     prod => prod.ProductID,
-                    (orderProd, prod) => new { orderProd.Id, orderProd.ProductQuantity, orderProd.ProductPris, prod.ProductName, prod.File1, prod.FileType1 }
+                    (orderProd, prod) => new { orderProd.Id, orderProd.ProductQuantity, orderProd.ProductPris, prod.ProductName, prod.File1, }
                 ).ToArray();
 
             this.database.Users.Update(user);
@@ -306,7 +306,7 @@ namespace Final_Project_Backend.Controllers
                 .Join(this.database.Products,
                     orderProd => orderProd.ProductId,
                     prod => prod.ProductID,
-                    (orderProd, prod) => new { orderProd.Id, orderProd.ProductQuantity, orderProd.ProductPris, prod.ProductName, prod.File1, prod.FileType1 }
+                    (orderProd, prod) => new { orderProd.Id, orderProd.ProductQuantity, orderProd.ProductPris, prod.ProductName, prod.File1,}
                 ).ToArray();
 
             this.database.Users.Update(user);

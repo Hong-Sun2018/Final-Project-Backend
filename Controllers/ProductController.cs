@@ -2,8 +2,10 @@
 using Final_Project_Backend.Models.Classes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Drawing;
-using System.Drawing.Imaging;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Processing;
+
 
 namespace Final_Project_Backend.Controllers
 {
@@ -58,26 +60,22 @@ namespace Final_Project_Backend.Controllers
             }
         }
 
-        private  byte[] ResizeImageAndToBytesArray(IFormFile file)
+        private  string ResizeImageAndToBase64(IFormFile file)
         {
-            Image image = Image.FromStream(file.OpenReadStream());
+            IImageFormat? format = null;
+            Image image = Image.Load(file.OpenReadStream(), out format);
+            string retVal = "";
             double height = (double)image.Height;
             double width = (double)image.Width;
             double ratio = height / width;
-            using var memStream = new MemoryStream();   
+            using var memStream = new MemoryStream();
             if (width > 225)
             {
                 int newWidth = 225;
                 int newHeight = (int)(newWidth * ratio);
-                Image resizedImage = new Bitmap(image, new Size(newWidth, newHeight));
-                resizedImage.Save(memStream, image.RawFormat);
-                return memStream.ToArray();
+                image.Mutate(image => image.Resize(newWidth, newHeight));
             }
-            else
-            {
-                file.CopyTo(memStream);
-                return memStream.ToArray();
-            }
+            return image.ToBase64String(format);
         }
 
         [HttpPost]
@@ -96,20 +94,17 @@ namespace Final_Project_Backend.Controllers
 
                 if (product.FormFile1 != null)
                 {
-                    product.File1 = this.ResizeImageAndToBytesArray(product.FormFile1);
-                    product.FileType1 = product.FormFile1.ContentType;
+                    product.File1 = this.ResizeImageAndToBase64(product.FormFile1);
                 }
 
                 if (product.FormFile2 != null)
                 {
-                    product.File2 = this.ResizeImageAndToBytesArray(product.FormFile2);
-                    product.FileType2 = product.FormFile2.ContentType;
+                    product.File2 = this.ResizeImageAndToBase64(product.FormFile2);
                 }
 
                 if (product.FormFile3 != null)
                 {
-                    product.File3 = this.ResizeImageAndToBytesArray(product.FormFile3);
-                    product.FileType3 = product.FormFile3.ContentType;
+                    product.File3 = this.ResizeImageAndToBase64(product.FormFile3);
                 }
 
                 database.Users.Update(user);
@@ -207,18 +202,15 @@ namespace Final_Project_Backend.Controllers
 
             if (product.FormFile1 != null)
             {
-                productsFromDB[0].FileType1 = product.FormFile1.ContentType;
-                productsFromDB[0].File1 = this.ResizeImageAndToBytesArray(product.FormFile1);
+                productsFromDB[0].File1 = this.ResizeImageAndToBase64(product.FormFile1);
             }
             if (product.FormFile2 != null)
             {
-                productsFromDB[0].FileType2 = product.FormFile2.ContentType;
-                productsFromDB[0].File2 = this.ResizeImageAndToBytesArray(product.FormFile2);
+                productsFromDB[0].File2 = this.ResizeImageAndToBase64(product.FormFile2);
             }
             if (product.FormFile3 != null)
             {
-                productsFromDB[0].FileType3 = product.FormFile3.ContentType;
-                productsFromDB[0].File3 = this.ResizeImageAndToBytesArray(product.FormFile3);
+                productsFromDB[0].File3 = this.ResizeImageAndToBase64(product.FormFile3);
             }
 
             productsFromDB[0].ProductDesc = product.ProductDesc;
