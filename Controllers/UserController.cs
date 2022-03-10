@@ -47,15 +47,19 @@ namespace Final_Project_Backend.Controllers
             }
         }
 
+        [Route("signout")]
+        [HttpGet]
+        public ActionResult TokenSignOut()
+        {
+            HttpContext.Response.Cookies.Delete("userToken");
+            return Ok();
+        }
+
         [Route("token-login")]
         [HttpGet]
         public async Task<ActionResult<UserInfo>> TokenLogin()
         {
             string? userToken = HttpContext.Request.Cookies["userToken"];
-            if (userToken == null)
-            {
-                return Unauthorized();
-            }
             
             try
             {
@@ -71,6 +75,7 @@ namespace Final_Project_Backend.Controllers
                     userInfo.isAdmin = user.IsAdmin;
                     database.Update(user);
                     await database.SaveChangesAsync();
+                    HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
                     return userInfo;
                 }
             } catch (Exception)
@@ -84,10 +89,6 @@ namespace Final_Project_Backend.Controllers
         public async Task<ActionResult<UserInfo>> TokenLoginAdmin()
         {
             string? userToken = HttpContext.Request.Cookies["userToken"];
-            if (userToken == null)
-            {
-                return Unauthorized();
-            }
 
             try
             {
@@ -105,6 +106,7 @@ namespace Final_Project_Backend.Controllers
                     database.Update(user);
                     HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
                     await database.SaveChangesAsync();
+                    HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
                     return userInfo;
                 }
             }
@@ -201,8 +203,31 @@ namespace Final_Project_Backend.Controllers
             }
         }
 
-        private User? CheckUserToken(string token)
+        [HttpGet]
+        public async Task<ActionResult> GetUsers()
         {
+            string? token = HttpContext.Request.Cookies["userToken"];
+            AppDbContext database = new AppDbContext();
+            User? user = this.CheckAdminToken(token);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            database.Users.Update(user);
+            HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
+            var allUsers = database.Users.Select(user => new { user.UserName, user.UserID}).ToArray();
+            await database.SaveChangesAsync();
+            return Ok(allUsers);
+        }
+
+        private User? CheckUserToken(string? token)
+        {   
+            if (token == null || token.Length < 32)
+            {
+                return null;
+            }
+
             AppDbContext database = new AppDbContext();
             // get user by token
             User[] users = database.Users.Where(user => user.Token == token).ToArray();
@@ -231,8 +256,13 @@ namespace Final_Project_Backend.Controllers
             }
         }
 
-        private User? CheckAdminToken(string token)
+        private User? CheckAdminToken(string? token)
         {
+            if (token == null || token.Length < 32)
+            {
+                return null;
+            } 
+
             AppDbContext database = new AppDbContext();
             // get user by token
             User[] users = database.Users.Where(user => user.Token == token).ToArray();
@@ -263,6 +293,25 @@ namespace Final_Project_Backend.Controllers
                 users[0].TimeLogin = currentTime;
                 return users[0];
             }
+        }
+
+        [HttpGet]
+        [Route("get-total-number")]
+        public async Task<ActionResult> GetTotalNumber()
+        {
+            string? token = HttpContext.Request.Cookies["userToken"];
+            User? user = this.CheckAdminToken(token);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            AppDbContext database = new AppDbContext();
+            database.Users.Update(user);
+            int number = database.Users.Count();
+            await database.SaveChangesAsync();
+            HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
+            return Ok(number);
+
         }
     }
 }

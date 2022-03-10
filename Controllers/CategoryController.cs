@@ -18,36 +18,6 @@ namespace Final_Project_Backend.Controllers
             IsEssential = true
         };
 
-        private User? CheckUserToken(string token)
-        {
-            AppDbContext database = new AppDbContext();
-            // get user by token
-            User[] users = database.Users.Where(user => user.Token == token).ToArray();
-            long currentTime = Util.CurrentTimestamp();
-
-            // if cannot find user
-            if (users.Length != 1)
-            {
-                return null;
-            }
-            else if (currentTime - users[0].TimeLogin > 3 * 24 * 3600)
-            {
-                return null;
-            }
-            else if (currentTime - users[0].TimeToken > 1 * 24 * 3600)
-            {
-                users[0].TimeToken = currentTime;
-                users[0].TimeLogin = currentTime;
-                users[0].Token = Util.GenerateUserToken(users[0]);
-                return users[0];
-            }
-            else
-            {
-                users[0].TimeLogin = currentTime;
-                return users[0];
-            }
-        }
-
         private User? CheckAdminToken(string token)
         {
             AppDbContext database = new AppDbContext();
@@ -120,6 +90,7 @@ namespace Final_Project_Backend.Controllers
                     
                     await database.Categories.AddAsync(category);
                     await database.SaveChangesAsync();
+                    HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
                     return StatusCode(201);                    
                 }
                 else
@@ -141,6 +112,26 @@ namespace Final_Project_Backend.Controllers
                 List<Category> categoryList = database.Categories.Where(c => c.ParentID == parentID).ToList();
                 return categoryList;
 
+        }
+
+        [HttpGet]
+        [Route("get-cate-path")]
+        public ActionResult<List<Category>> GetCategoryPath(int categoryID)
+        {
+            List<Category> catePath = new List<Category>();
+            AppDbContext database = new AppDbContext();
+            this.FindParent(categoryID, database, catePath);
+            return catePath;
+        }
+
+        private void FindParent(int categoryID, AppDbContext database, List<Category> catePath)
+        {
+            Category currentCate = database.Categories.Where(c => c.CategoryID == categoryID).First();
+            if (currentCate.ParentID != -1)
+            {
+                this.FindParent(currentCate.ParentID, database, catePath);
+            }
+            catePath.Add(currentCate);
         }
     }
 }

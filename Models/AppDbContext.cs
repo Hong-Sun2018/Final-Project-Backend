@@ -9,6 +9,9 @@ namespace Final_Project_Backend.Models
         public DbSet<Category> Categories { get; set; }
         public DbSet<Debug> Debugs { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<CartProduct> CartProduct { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderProduct> OrderProduct { get; set; }
 
         
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
