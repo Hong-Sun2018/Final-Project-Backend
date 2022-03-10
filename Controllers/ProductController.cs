@@ -115,6 +115,7 @@ namespace Final_Project_Backend.Controllers
                 database.Users.Update(user);
                 await database.Products.AddAsync(product);
                 await database.SaveChangesAsync();
+                HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
                 return StatusCode(201);
             }
             catch (Exception)
@@ -226,7 +227,9 @@ namespace Final_Project_Backend.Controllers
             productsFromDB[0].ProductStock = product.ProductStock;
             productsFromDB[0].CategoryID = product.CategoryID;
             database.Products.Update(productsFromDB[0]);
+            database.Users.Update(user);
             await database.SaveChangesAsync();
+            HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
             return StatusCode(204);
         }
 
@@ -252,9 +255,30 @@ namespace Final_Project_Backend.Controllers
             else
             {
                 database.Products.Remove(prod);
+                database.Users.Update(user);
                 await database.SaveChangesAsync();
+                HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
                 return Ok();
             }
+        }
+
+        [HttpGet]
+        [Route("get-total-number")]
+        public async Task<ActionResult> GetTotalNumber()
+        {
+            string? token = HttpContext.Request.Cookies["userToken"];
+            User? user = this.CheckAdminToken(token);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            AppDbContext database = new AppDbContext();
+            database.Users.Update(user);
+            int number = database.Products.Count();
+            await database.SaveChangesAsync();
+            HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
+            return Ok(number);
+
         }
     }
 }

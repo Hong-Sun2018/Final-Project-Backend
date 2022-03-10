@@ -18,36 +18,6 @@ namespace Final_Project_Backend.Controllers
             IsEssential = true
         };
 
-        private User? CheckUserToken(string token)
-        {
-            AppDbContext database = new AppDbContext();
-            // get user by token
-            User[] users = database.Users.Where(user => user.Token == token).ToArray();
-            long currentTime = Util.CurrentTimestamp();
-
-            // if cannot find user
-            if (users.Length != 1)
-            {
-                return null;
-            }
-            else if (currentTime - users[0].TimeLogin > 3 * 24 * 3600)
-            {
-                return null;
-            }
-            else if (currentTime - users[0].TimeToken > 1 * 24 * 3600)
-            {
-                users[0].TimeToken = currentTime;
-                users[0].TimeLogin = currentTime;
-                users[0].Token = Util.GenerateUserToken(users[0]);
-                return users[0];
-            }
-            else
-            {
-                users[0].TimeLogin = currentTime;
-                return users[0];
-            }
-        }
-
         private User? CheckAdminToken(string token)
         {
             AppDbContext database = new AppDbContext();
@@ -120,6 +90,7 @@ namespace Final_Project_Backend.Controllers
                     
                     await database.Categories.AddAsync(category);
                     await database.SaveChangesAsync();
+                    HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
                     return StatusCode(201);                    
                 }
                 else

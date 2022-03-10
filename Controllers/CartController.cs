@@ -10,6 +10,14 @@ namespace Final_Project_Backend.Controllers
     public class CartController : ControllerBase
     {
         private readonly AppDbContext database = new AppDbContext();
+
+        CookieOptions _cookieOptions = new CookieOptions()
+        {
+            Secure = true,
+            HttpOnly = true,
+            SameSite = SameSiteMode.None,
+            IsEssential = true,
+        };
         private User? CheckUserToken(string? token)
         {
             if (token == null || token.Length < 32)
@@ -82,6 +90,7 @@ namespace Final_Project_Backend.Controllers
                 
                 this.database.Update(user);
                 await this.database.SaveChangesAsync();
+                HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
                 return StatusCode(201);
             } else
             {
@@ -109,6 +118,7 @@ namespace Final_Project_Backend.Controllers
                 ).ToList();
             this.database.Users.Update(user);
             await this.database.SaveChangesAsync();
+            HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
             return Ok(cartProductListWithProductDetail);
         }
 
@@ -138,6 +148,7 @@ namespace Final_Project_Backend.Controllers
                 this.database.CartProduct.Update(cartProductFromDB);
                 this.database.Users.Update(user);
                 await this.database.SaveChangesAsync();
+                HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
                 return Ok();
             }
             else 
@@ -169,6 +180,7 @@ namespace Final_Project_Backend.Controllers
                 this.database.CartProduct.Remove(cartProd);
                 this.database.Users.Update(user);
                 await this.database.SaveChangesAsync();
+                HttpContext.Response.Cookies.Append("userToken", user.Token, _cookieOptions);
                 return Ok();
             }
         }

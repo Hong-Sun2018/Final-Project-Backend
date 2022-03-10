@@ -14,6 +14,8 @@ namespace Final_Project_Backend.Models.Classes
         public long OrderTime { get; set; }
         [Required]
         public OrderStatus Status { get; set; }
+        [NotMapped]
+        public double TotalAmount { get; set; }
         [NotMapped] 
         public List<OrderProduct>? OrderProducts { get; set; }
     }
